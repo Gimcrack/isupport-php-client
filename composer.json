@@ -1,24 +1,24 @@
 {
-    "name": "smarch/motherbox",
-    "description": "A Laravel 5 package generator",
+    "name": "ingenious/isupport-php-client",
+    "description": "An isupport client for php",
     "type": "package",
-    "homepage": "https://github.com/SmarchSoftware/motherbox",
-    "keywords": ["packages", "workbench", "generator", "package generator", "laravel 5"],
+    "homepage": "https://github.com/akmatsu/isupport-php-client",
+    "keywords": ["isupport","client"],
     "license": "MIT",
     "authors": [
         {
-            "name": "Smarch Software",
-            "email": "packages@smarchsoft.com"
+            "name": "Jeremy Bloomstrom",
+            "email": "jeremy.bloomstrom@matsugov.us"
         }
     ],
     "require": {
         "php": ">=5.5.9",
         "laravel/framework": "~5.1",
-        "laravelcollective/html": "5.1.*"
+        "kitetail/zttp": "^0.2.0"
     },
     "autoload": {
         "psr-4": {
-            "Smarch\\Motherbox\\": "src/"
+            "Ingenious\\Isupport\\": "src/"
         }
     }
 }

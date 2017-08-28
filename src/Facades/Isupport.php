@@ -1,10 +1,13 @@
 <?php
 
-namespace {{capNamespace}}\Facades;
+namespace Ingenious\Isupport\Facades;
 
 use Illuminate\Support\Facades\Facade;
 
-class {{capName}}Facade extends Facade
+/**
+ * @see \App\Isupport\Isupport
+ */
+class Isupport extends Facade
 {
     /**
      * Get the registered name of the component.
@@ -13,6 +16,6 @@ class {{capName}}Facade extends Facade
      */
     protected static function getFacadeAccessor()
     {
-        return '{{name}}';
+        return 'Isupport';
     }
 }
