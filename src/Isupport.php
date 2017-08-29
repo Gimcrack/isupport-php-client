@@ -84,9 +84,9 @@ class Isupport {
 
                     $ticket['id'] = (int) $ticket['id'];
 
-                    return $ticket;
+                    return (object) $ticket;
                 });
-            return collect($json);
+            return (object) $json;
         });
     }
 
@@ -112,6 +112,28 @@ class Isupport {
     public function tickets($groupOrIndividual = null, $id = null)
     {
         return $this->getJson( "{$groupOrIndividual}/{$id}" );
+    }
+
+    /**
+     * Get the hot tickets
+     * @method hot
+     *
+     * @return   json
+     */
+    public function hot($groupOrIndividual = null, $id = null)
+    {
+        $response = $this->getJson($groupOrIndividual, $id);
+
+        $response->data = $response->data
+            ->reject( function($ticket) {
+                return $ticket->status == 'Closed';
+            })
+            ->reject( function($ticket) {
+                $hours = ( date('N') > 1 ) ? 24 : 72; // mondays
+                return Carbon::now()->subHours($hours)->gt( Carbon::parse( $ticket->created_date ) )
+            });
+
+        return $response;
     }
 
     /**
