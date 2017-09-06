@@ -130,6 +130,49 @@ class Isupport {
     }
 
     /**
+     * Get the reps with open tickets
+     * @method reps
+     *
+     * @return   json
+     */
+    public function reps()
+    {
+        $response = $this->unclosed();
+
+        $all = $response->data->pluck('assignee')->unique();
+
+        return [
+            'persons' => $all->reject( function($ass) {
+                    return preg_match("/\d/", $ass) || $ass == "Web Change Request H";
+                })->values()->sort()->values(),
+            'groups' => $all->filter( function($ass) {
+                    return preg_match("/\d/", $ass) || $ass == "Web Change Request H";
+                })->values()->sort()->values()
+        ];
+    }
+
+    /**
+     * Get the tickets by reps
+     * @method openTicketsByReps
+     *
+     * @return   json
+     */
+    public function openTicketsByReps($reps)
+    {
+        $response = $this->unclosed();
+
+        $response->data = $response->data
+            ->filter( function($ticket) use ($reps) {
+                return in_array($ticket->assignee, $reps);
+            })
+            ->values();
+
+        $response->to = $response->count = $response->data->count();
+
+        return $response;
+    }
+
+    /**
      * Get tickets
      * @method tickets
      *
