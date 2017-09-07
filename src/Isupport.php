@@ -83,7 +83,7 @@ class Isupport {
 
         $this->force_flag = false;
 
-        return Cache::remember( "isupport.{$expanded}", 5, function() use ($expanded) {
+        return Cache::remember( "isupport.{$expanded}", 15, function() use ($expanded) {
 
             $json = $this->get($expanded)->json();
 
@@ -93,6 +93,11 @@ class Isupport {
                     if ( isset($ticket['created_date']) )
                     {
                         $ticket['created_date'] = Carbon::parse( $ticket['created_date'] )->format('Y-m-d');
+                    }
+
+                    if ( isset($ticket['closed_date']) )
+                    {
+                        $ticket['closed_date'] = Carbon::parse( $ticket['closed_date'] )->format('Y-m-d');
                     }
 
                     $ticket['id'] = (int) $ticket['id'];
@@ -309,5 +314,39 @@ class Isupport {
         }
 
         return $this->getJson("Trends/{$groupOrIndividual}/{$id}/{$years}");
+    }
+
+    /**
+     * Get closed tickets
+     * @method closed
+     *
+     * @return   void
+     */
+    public function closed()
+    {
+        return $this->archive()->tickets();
+    }
+
+    /**
+     * Get tickets closed recently
+     * @method recentClosed
+     *
+     * @return   void
+     */
+    public function recentClosed()
+    {
+        $response = $this->closed();
+
+        $response->data = $response->data
+            ->reject( function($ticket) {
+                $days = ( date('N') > 1 ) ? 2 : 4; // mondays
+
+                return Carbon::parse( $ticket->closed_date )->lt( Carbon::now()->subDays($days) );
+            })
+            ->values();
+
+        $response->to = $response->count = $response->data->count();
+
+        return $response;
     }
 }
