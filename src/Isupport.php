@@ -95,6 +95,11 @@ class Isupport {
                         $ticket['created_date'] = Carbon::parse( $ticket['created_date'] )->format('Y-m-d');
                     }
 
+                    if ( isset($ticket['modified_date']) )
+                    {
+                        $ticket['modified_date'] = Carbon::parse( $ticket['modified_date'] )->format('Y-m-d');
+                    }
+
                     if ( isset($ticket['closed_date']) )
                     {
                         $ticket['closed_date'] = Carbon::parse( $ticket['closed_date'] )->format('Y-m-d');
