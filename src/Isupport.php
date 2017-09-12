@@ -45,11 +45,15 @@ class Isupport {
      */
     private function url($url)
     {
-        return vsprintf("%s/%s%s", [
+        $url = vsprintf("%s/%s%s", [
             $this->endpoint,
             ($this->archive_flag) ? 'Archive/' : '',
             trim($url,'/')
         ]);
+
+        $this->archive_flag = false;
+
+        return $url;
     }
 
     /**
