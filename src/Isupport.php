@@ -3,27 +3,22 @@
 namespace Ingenious\Isupport;
 
 use Cache;
+use StdClass;
 use Zttp\Zttp;
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
+use Ingenious\Isupport\Contracts\TicketProvider as TicketProviderContract;
 
-class Isupport {
-
-    protected $endpoint;
-
-    protected $archive_flag;
-
-    protected $force_flag;
+class Isupport extends TicketProviderStub implements TicketProviderContract {
 
     /**
      * New up a new Isupport class
      */
     public function __construct()
     {
+        parent::__construct();
+
         $this->endpoint = config('isupport.endpoint');
-
-        $this->archive_flag = false;
-
-        $this->force_flag = false;
     }
 
     /**
@@ -32,7 +27,7 @@ class Isupport {
      *
      * @return   string
      */
-    public function endpoint()
+    private function endpoint()
     {
         return $this->endpoint;
     }
@@ -118,38 +113,12 @@ class Isupport {
     }
 
     /**
-     * Force a refresh
-     * @method force
-     *
-     * @return   $this
-     */
-    public function force()
-    {
-        $this->force_flag = true;
-
-        return $this;
-    }
-
-    /**
-     * Get archived tickets
-     * @method archive
-     *
-     * @return   $this
-     */
-    public function archive()
-    {
-        $this->archive_flag = true;
-
-        return $this;
-    }
-
-    /**
      * Get the reps with open tickets
      * @method reps
      *
-     * @return   json
+     * @return   array
      */
-    public function reps()
+    public function reps() : array
     {
         $response = $this->unclosed();
 
@@ -171,7 +140,7 @@ class Isupport {
      *
      * @return   json
      */
-    public function openTicketsByReps($reps)
+    public function openTicketsByReps(array $reps) : StdClass
     {
         $response = $this->unclosed();
 
@@ -192,7 +161,7 @@ class Isupport {
      *
      * @return   json
      */
-    public function tickets($groupOrIndividual = null, $id = null)
+    public function tickets($groupOrIndividual = null, $id = null) : StdClass
     {
         return $this->getJson( "{$groupOrIndividual}/{$id}" );
     }
@@ -203,7 +172,7 @@ class Isupport {
      *
      * @return   json
      */
-    public function hot($groupOrIndividual = null, $id = null)
+    public function hot($groupOrIndividual = null, $id = null) : StdClass
     {
         $response = $this->unclosed($groupOrIndividual, $id);
 
@@ -225,7 +194,7 @@ class Isupport {
      *
      * @return   json
      */
-    public function aging($groupOrIndividual = null, $id = null)
+    public function aging($groupOrIndividual = null, $id = null) : StdClass
     {
         $response = $this->unclosed($groupOrIndividual, $id);
 
@@ -250,7 +219,7 @@ class Isupport {
      *
      * @return   json
      */
-    public function stale($groupOrIndividual = null, $id = null)
+    public function stale($groupOrIndividual = null, $id = null) : StdClass
     {
         $response = $this->unclosed($groupOrIndividual, $id);
 
@@ -273,7 +242,7 @@ class Isupport {
      *
      * @return   json
      */
-    public function open($groupOrIndividual = null, $id = null)
+    public function open($groupOrIndividual = null, $id = null) : StdClass
     {
         $response = $this->getJson($groupOrIndividual, $id);
 
@@ -294,7 +263,7 @@ class Isupport {
      *
      * @return   json
      */
-    public function unclosed($groupOrIndividual = null, $id = null)
+    public function unclosed($groupOrIndividual = null, $id = null) : StdClass
     {
         $response = $this->getJson($groupOrIndividual, $id);
 
@@ -315,7 +284,7 @@ class Isupport {
      *
      * @return   json
      */
-    public function trends($groupOrIndividual = null, $id = null, $years = null)
+    public function trends($groupOrIndividual = null, $id = null, $years = null) : StdClass
     {
         if ( is_numeric($groupOrIndividual) ) {
             $years = $groupOrIndividual;
@@ -331,9 +300,20 @@ class Isupport {
      *
      * @return   void
      */
-    public function closed()
+    public function closed() : StdClass
     {
         return $this->archive()->tickets();
+    }
+
+    /**
+     * Get the recently closed tickets.
+     * @method recent
+     *
+     * @return   void
+     */
+    public function recent() : StdClass
+    {
+        return $this->archive()->getJson('Recent');
     }
 
     /**
@@ -342,9 +322,9 @@ class Isupport {
      *
      * @return   void
      */
-    public function recentClosed()
+    public function recentClosed() : StdClass
     {
-        $response = $this->closed();
+        $response = $this->recent();
 
         $response->data = $response->data
             ->reject( function($ticket) {
