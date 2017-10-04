@@ -89,22 +89,93 @@ class Isupport extends TicketProviderStub implements TicketProviderContract {
             $json['data'] = collect( $json['data'] )
                 ->transform( function($ticket)
                 {
-                    if ( isset($ticket['created_date']) )
+                    if ( array_key_exists('created_date', $ticket) )
                     {
                         $ticket['created_date'] = Carbon::parse( $ticket['created_date'] )->format('Y-m-d');
                     }
 
-                    if ( isset($ticket['modified_date']) )
+                    if ( array_key_exists('modified_date', $ticket) )
                     {
                         $ticket['modified_date'] = Carbon::parse( $ticket['modified_date'] )->format('Y-m-d');
                     }
 
-                    if ( isset($ticket['closed_date']) )
+                    if ( array_key_exists('closed_date', $ticket) )
                     {
                         $ticket['closed_date'] = Carbon::parse( $ticket['closed_date'] )->format('Y-m-d');
                     }
 
-                    $ticket['id'] = (int) $ticket['id'];
+                    if ( array_key_exists('id', $ticket) )
+                    {
+                        $ticket['id'] = (int) $ticket['id'];
+                    }
+
+                    if ( array_key_exists('Customer_DisplayName', $ticket) )
+                    {
+                        $ticket['customer'] = $ticket['Customer_DisplayName'];
+                        unset($ticket['Customer_DisplayName']);
+                    }
+
+                    if ( array_key_exists('Customer_Department', $ticket) )
+                    {
+                        $ticket['department'] = $ticket['Customer_Department'];
+                        unset($ticket['Customer_Department']);
+                    }
+
+                    if ( array_key_exists('Assignee_DisplayName', $ticket) )
+                    {
+                        $ticket['assignee'] = $ticket['Assignee_DisplayName'];
+                        unset($ticket['Assignee_DisplayName']);
+                    }
+
+                    if ( array_key_exists('Assignee_GroupName', $ticket) )
+                    {
+                        $ticket['assignee_group'] = $ticket['Assignee_GroupName'];
+                        unset($ticket['Assignee_GroupName']);
+                    }
+
+                    if ( array_key_exists('CreatedDate', $ticket) )
+                    {
+                        $ticket['created_date'] = $this->jsDateToCarbon($ticket['CreatedDate']);
+                        unset($ticket['CreatedDate']);
+                    }
+
+                    if ( array_key_exists('ClosedDate', $ticket) )
+                    {
+                        $ticket['closed_date'] = $this->jsDateToCarbon($ticket['ClosedDate']);
+                        unset($ticket['ClosedDate']);
+                    }
+
+                    if ( array_key_exists('DaysOpen', $ticket) )
+                    {
+                        $ticket['days_open'] = (int) floor($ticket['DaysOpen']);
+                        unset($ticket['DaysOpen']);
+                    }
+
+                    if ( array_key_exists('TotalTimeWorked', $ticket) )
+                    {
+                        $ticket['total_time_worked'] = $ticket['TotalTimeWorked'];
+                        unset($ticket['TotalTimeWorked']);
+                    }
+
+
+                    if ( array_key_exists('Category', $ticket) )
+                    {
+                        $ticket['category'] = $ticket['Category'];
+                        unset($ticket['Category']);
+                    }
+
+                    if ( array_key_exists('FirstResponseDate', $ticket) )
+                    {
+                        $ticket['first_response_date'] = $this->jsDateToCarbon($ticket['FirstResponseDate']);
+                        unset($ticket['FirstResponseDate']);
+                    }
+
+                    if ( array_key_exists('DaysToFirstResponse', $ticket) )
+                    {
+                        $ticket['days_to_first_response'] = $ticket['DaysToFirstResponse'];
+                        unset($ticket['DaysToFirstResponse']);
+                    }
+
 
                     return (object) $ticket;
                 });
@@ -337,5 +408,73 @@ class Isupport extends TicketProviderStub implements TicketProviderContract {
         $response->to = $response->count = $response->data->count();
 
         return $response;
+    }
+
+    /**
+     * Description
+     * @method averageTimeOpen
+     *
+     * @return   void
+     */
+    public function averageTimeOpen($resolution = 10, $groupOrIndividual = null, $id = null, $years = 2)
+    {
+        $oit = false;
+        if( $groupOrIndividual == 'Group' && $id == 'OIT' ) {
+            $oit = true;
+            $groupOrIndividual = null;
+            $id = null;
+        }
+
+        $response = $this->trends($groupOrIndividual, $id, $years);
+
+        $response->data = $response->data
+            ->reject( function($ticket) {
+                return empty($ticket->closed_date);
+            })
+            ->reject( function($ticket) use ($oit) {
+                if ( ! $oit ) return false;
+                return preg_match("/TRIM|Records Support Team|GIS Team/", $ticket->assignee_group);
+            })
+            ->reject( function($ticket) use ($years) {
+                return Carbon::now()->subYears($years)->gt( Carbon::parse($ticket->created_date) );
+            })
+            ->sortBy("created_date")
+            ->groupBy( function($ticket) use ($resolution) {
+                $ts = Carbon::parse( $ticket->created_date )->timestamp;
+                $interval = $resolution * 24 * 60 * 60; // $resolution days converted to sec.
+                return "period__" . floor( $ts / $interval );
+            })
+            ->transform( function($group) {
+                return [
+                    'min_date' => $group->min('created_date'),
+                    'count' => (int) $group->count(),
+                    'min_days_to_first_response' => (int) $group->min('days_to_first_response'),
+                    'max_days_to_first_response' => (int) $group->max('days_to_first_response'),
+                    'average_days_to_first_response' => (float) number_format($group->avg('days_to_first_response'),2),
+                    'average_days_to_first_response_corrected_1' => (float) number_format($group->pluck('days_to_first_response')->remove_outliers(1)->avg(),2),
+                    'average_days_to_first_response_corrected_2' => (float) number_format($group->pluck('days_to_first_response')->remove_outliers(2)->avg(),2),
+                    'average_days_to_first_response_corrected_3' => (float) number_format($group->pluck('days_to_first_response')->remove_outliers(3)->avg(),2),
+                    'std_dev' => $group->pluck('days_to_first_response')->stddev(),
+                ];
+            })
+            ->values();
+
+        return $response;
+    }
+
+    /**
+     * Convert a JSON date string to a Carbon instance
+     * @method jsDateToCarbon
+     *
+     * @return   string
+     */
+    private function jsDateToCarbon($date)
+    {
+        if ( ! $date ) return null;
+
+        // timestamp in microsec
+        $date_us = str_replace(["/Date(",")/"], null, $date);
+
+        return date("Y-m-d", $date_us/1000 );
     }
 }
