@@ -125,6 +125,16 @@ class IsupportFake extends TicketProviderStub implements TicketProviderContract 
     }
 
     /**
+     * Get the average time open
+     *
+     * @return  StcClass
+     */
+    public function averageTimeOpen($resolution, $groupOrIndividual, $id, $years) : StdClass
+    {
+        return $this->fakeTickets();
+    }
+
+    /**
      * Get closed tickets
      * @method closed
      *

@@ -28,6 +28,8 @@ interface TicketProvider {
 
     public function trends($groupOrIndividual, $id, $years) : StdClass;
 
+    public function averageTimeOpen($resolution, $groupOrIndividual, $id, $years) : StdClass;
+
     public function closed() : StdClass;
 
     public function recentClosed() : StdClass;
