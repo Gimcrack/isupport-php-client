@@ -410,13 +410,18 @@ class Isupport extends TicketProviderStub implements TicketProviderContract {
         return $response;
     }
 
+    public function ticketResponseTimes($resolution = 10, $groupOrIndividual = null, $id = null, $years = 2)
+    {
+        return $this->averageTimeOpen($resolution, $groupOrIndividual, $id, $years);
+    }
+
     /**
      * Description
      * @method averageTimeOpen
      *
      * @return   void
      */
-    public function averageTimeOpen($resolution = 10, $groupOrIndividual = null, $id = null, $years = 2)
+    public function averageTimeOpen($resolution = 10, $groupOrIndividual = null, $id = null, $years = 2) : StdClass
     {
         $oit = false;
         if( $groupOrIndividual == 'Group' && $id == 'OIT' ) {
