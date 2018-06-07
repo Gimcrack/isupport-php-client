@@ -88,93 +88,35 @@ class Isupport extends TicketProviderStub implements TicketProviderContract {
             $json['data'] = collect( $json['data'] )
                 ->transform( function($ticket)
                 {
-                    if ( array_key_exists('created_date', $ticket) )
-                    {
-                        $ticket['created_date'] = Carbon::parse( $ticket['created_date'] )->format('Y-m-d');
-                    }
-
-                    if ( array_key_exists('modified_date', $ticket) )
-                    {
-                        $ticket['modified_date'] = Carbon::parse( $ticket['modified_date'] )->format('Y-m-d');
-                    }
-
-                    if ( array_key_exists('closed_date', $ticket) )
-                    {
-                        $ticket['closed_date'] = Carbon::parse( $ticket['closed_date'] )->format('Y-m-d');
-                    }
-
                     if ( array_key_exists('id', $ticket) )
                     {
                         $ticket['id'] = (int) $ticket['id'];
                     }
 
-                    if ( array_key_exists('Customer_DisplayName', $ticket) )
+                    if ( array_key_exists('created_date', $ticket) )
                     {
-                        $ticket['customer'] = $ticket['Customer_DisplayName'];
-                        unset($ticket['Customer_DisplayName']);
+                        $ticket['created_date'] = $this->jsDateToCarbon( $ticket['created_date'] );
                     }
 
-                    if ( array_key_exists('Customer_Department', $ticket) )
+                    if ( array_key_exists('modified_date', $ticket) )
                     {
-                        $ticket['department'] = $ticket['Customer_Department'];
-                        unset($ticket['Customer_Department']);
+                        $ticket['modified_date'] = $this->jsDateToCarbon( $ticket['modified_date'] );
                     }
 
-                    if ( array_key_exists('Assignee_DisplayName', $ticket) )
+                    if ( array_key_exists('closed_date', $ticket) )
                     {
-                        $ticket['assignee'] = $ticket['Assignee_DisplayName'];
-                        unset($ticket['Assignee_DisplayName']);
+                        $ticket['closed_date'] = $this->jsDateToCarbon( $ticket['closed_date'] );
                     }
 
-                    if ( array_key_exists('Assignee_GroupName', $ticket) )
+                    if ( array_key_exists('first_response_date', $ticket) )
                     {
-                        $ticket['assignee_group'] = $ticket['Assignee_GroupName'];
-                        unset($ticket['Assignee_GroupName']);
+                        $ticket['first_response_date'] = $this->jsDateToCarbon($ticket['first_response_date']);
                     }
 
-                    if ( array_key_exists('CreatedDate', $ticket) )
+                    if ( array_key_exists('last_response_date', $ticket) )
                     {
-                        $ticket['created_date'] = $this->jsDateToCarbon($ticket['CreatedDate']);
-                        unset($ticket['CreatedDate']);
+                        $ticket['last_response_date'] = $this->jsDateToCarbon($ticket['last_response_date']);
                     }
-
-                    if ( array_key_exists('ClosedDate', $ticket) )
-                    {
-                        $ticket['closed_date'] = $this->jsDateToCarbon($ticket['ClosedDate']);
-                        unset($ticket['ClosedDate']);
-                    }
-
-                    if ( array_key_exists('DaysOpen', $ticket) )
-                    {
-                        $ticket['days_open'] = (int) floor($ticket['DaysOpen']);
-                        unset($ticket['DaysOpen']);
-                    }
-
-                    if ( array_key_exists('TotalTimeWorked', $ticket) )
-                    {
-                        $ticket['total_time_worked'] = $ticket['TotalTimeWorked'];
-                        unset($ticket['TotalTimeWorked']);
-                    }
-
-
-                    if ( array_key_exists('Category', $ticket) )
-                    {
-                        $ticket['category'] = $ticket['Category'];
-                        unset($ticket['Category']);
-                    }
-
-                    if ( array_key_exists('FirstResponseDate', $ticket) )
-                    {
-                        $ticket['first_response_date'] = $this->jsDateToCarbon($ticket['FirstResponseDate']);
-                        unset($ticket['FirstResponseDate']);
-                    }
-
-                    if ( array_key_exists('DaysToFirstResponse', $ticket) )
-                    {
-                        $ticket['days_to_first_response'] = $ticket['DaysToFirstResponse'];
-                        unset($ticket['DaysToFirstResponse']);
-                    }
-
 
                     return (object) $ticket;
                 });
