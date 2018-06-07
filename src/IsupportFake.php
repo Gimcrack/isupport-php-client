@@ -59,6 +59,17 @@ class IsupportFake extends TicketProviderStub implements TicketProviderContract 
     }
 
     /**
+     * Get my tickets
+     *
+     * @param $rep
+     * @return \StdClass
+     */
+    public function mine($rep) : StdClass
+    {
+        return $this->unclosed("Rep",$rep);
+    }
+
+    /**
      * Get the hot tickets
      * @method hot
      *

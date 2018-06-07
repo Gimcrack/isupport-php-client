@@ -2,11 +2,10 @@
 
 namespace Ingenious\Isupport;
 
-use Cache;
 use StdClass;
 use Zttp\Zttp;
 use Carbon\Carbon;
-use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Ingenious\Isupport\Contracts\TicketProvider as TicketProviderContract;
 
 class Isupport extends TicketProviderStub implements TicketProviderContract {
@@ -238,6 +237,17 @@ class Isupport extends TicketProviderStub implements TicketProviderContract {
     }
 
     /**
+     * Get my tickets
+     *
+     * @param $rep
+     * @return \StdClass
+     */
+    public function mine($rep) : StdClass
+    {
+        return $this->unclosed("Rep",$rep);
+    }
+
+    /**
      * Get the hot tickets
      * @method hot
      *
@@ -336,7 +346,7 @@ class Isupport extends TicketProviderStub implements TicketProviderContract {
      */
     public function unclosed($groupOrIndividual = null, $id = null) : StdClass
     {
-        $response = $this->getJson($groupOrIndividual, $id);
+        $response = $this->tickets($groupOrIndividual, $id);
 
         $response->data = $response->data
             ->reject( function($ticket) {
