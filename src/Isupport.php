@@ -41,7 +41,7 @@ class Isupport extends TicketProviderStub implements TicketProviderContract {
     {
         $url = vsprintf("%s/%s%s", [
             $this->endpoint,
-            ($this->archive_flag) ? 'Archive/' : '',
+            ($this->archive_flag) ? 'Archive/v2/' : '',
             trim($url,'/')
         ]);
 
@@ -321,11 +321,12 @@ class Isupport extends TicketProviderStub implements TicketProviderContract {
      * Get closed tickets
      * @method closed
      *
-     * @return   void
+     * @param null|string $period
+     * @return \StdClass
      */
-    public function closed() : StdClass
+    public function closed($period = null) : StdClass
     {
-        return $this->archive()->tickets();
+        return $this->archive()->tickets($period);
     }
 
     /**
