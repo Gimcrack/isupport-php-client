@@ -196,7 +196,7 @@ class Isupport extends TicketProviderStub implements TicketProviderContract {
      */
     public function mine($rep) : StdClass
     {
-        return $this->unclosed("Rep",$rep);
+        return $this->force()->unclosed("Rep",$rep);
     }
 
     /**
