@@ -118,6 +118,16 @@ class Isupport extends TicketProviderStub implements TicketProviderContract {
                         $ticket['last_response_date'] = $this->jsDateToCarbon($ticket['last_response_date']);
                     }
 
+                    if ( array_key_exists('last_customer_response_date', $ticket) )
+                    {
+                        $ticket['last_customer_response_date'] = $this->jsDateToCarbon($ticket['last_customer_response_date']);
+                    }
+
+                    if ( array_key_exists('customer_responded_last',$ticket) )
+                    {
+                        $ticket['customer_responded_last'] = !! $ticket['customer_responded_last'];
+                    }
+
                     return (object) $ticket;
                 });
             return (object) $json;
