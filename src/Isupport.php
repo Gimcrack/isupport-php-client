@@ -401,7 +401,7 @@ class Isupport extends TicketProviderStub implements TicketProviderContract {
             })
             ->reject( function($ticket) use ($oit) {
                 if ( ! $oit ) return false;
-                return preg_match("/TRIM|Records Support Team|GIS Team/", $ticket->assignee_group);
+                return preg_match("/TRIM|Records Support Team|GIS Team/", $ticket->group);
             })
             ->reject( function($ticket) use ($years) {
                 return Carbon::now()->subYears($years)->gt( Carbon::parse($ticket->created_date) );
