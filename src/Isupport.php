@@ -183,9 +183,9 @@ class Isupport extends TicketProviderStub implements TicketProviderContract {
      *
      * @return   json
      */
-    public function tickets($groupOrIndividual = null, $id = null) : StdClass
+    public function tickets($groupOrIndividual = null, $id = null, $period = null) : StdClass
     {
-        return $this->getJson( "{$groupOrIndividual}/{$id}" );
+        return $this->getJson( "{$groupOrIndividual}/{$id}/{$period}" );
     }
 
     /**
@@ -393,7 +393,7 @@ class Isupport extends TicketProviderStub implements TicketProviderContract {
             $id = null;
         }
 
-        $response = $this->trends($groupOrIndividual, $id, $years);
+        $response = $this->archive()->tickets($groupOrIndividual, $id, $years);
 
         $response->data = $response->data
             ->reject( function($ticket) {
@@ -424,8 +424,7 @@ class Isupport extends TicketProviderStub implements TicketProviderContract {
                     'average_days_to_first_response_corrected_3' => (float) number_format($group->pluck('days_to_first_response')->remove_outliers(3)->avg(),2),
                     'std_dev' => $group->pluck('days_to_first_response')->stddev(),
                 ];
-            })
-            ->values();
+            });
 
         return $response;
     }

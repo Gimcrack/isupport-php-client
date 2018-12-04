@@ -14,7 +14,7 @@ interface TicketProvider {
 
     public function openTicketsByReps(array $reps) : StdClass;
 
-    public function tickets($groupOrIndividual, $id) : StdClass;
+    public function tickets($groupOrIndividual, $id, $period) : StdClass;
 
     public function hot($groupOrIndividual, $id) : StdClass;
 

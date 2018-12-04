@@ -53,7 +53,7 @@ class IsupportFake extends TicketProviderStub implements TicketProviderContract 
      *
      * @return   json
      */
-    public function tickets($groupOrIndividual = null, $id = null) : StdClass
+    public function tickets($groupOrIndividual = null, $id = null, $period = null) : StdClass
     {
         return $this->fakeTickets();
     }
