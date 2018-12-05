@@ -424,7 +424,8 @@ class Isupport extends TicketProviderStub implements TicketProviderContract {
                     'average_days_to_first_response_corrected_3' => (float) number_format($group->pluck('days_to_first_response')->remove_outliers(3)->avg(),2),
                     'std_dev' => $group->pluck('days_to_first_response')->stddev(),
                 ];
-            });
+            })
+            ->values();
 
         return $response;
     }
