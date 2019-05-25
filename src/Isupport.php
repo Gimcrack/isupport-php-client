@@ -2,13 +2,26 @@
 
 namespace Ingenious\Isupport;
 
+use Illuminate\Support\Facades\DB;
+use Ingenious\Isupport\Concerns\MakesHttpRequests;
+use Ingenious\Isupport\Concerns\QueriesIsupportDatabase;
+use Ingenious\Isupport\Contracts\TicketProvider;
+use Ingenious\Isupport\Models\Group;
+use Ingenious\Isupport\Models\Rep;
+use Ingenious\Isupport\Models\Status;
+use Ingenious\Isupport\Models\Incident;
+use function last;
 use StdClass;
 use Zttp\Zttp;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Database\Query\Builder;
 use Ingenious\Isupport\Contracts\TicketProvider as TicketProviderContract;
 
 class Isupport extends TicketProviderStub implements TicketProviderContract {
+
+    use QueriesIsupportDatabase,
+        MakesHttpRequests;
 
     /**
      * New up a new Isupport class
@@ -21,120 +34,6 @@ class Isupport extends TicketProviderStub implements TicketProviderContract {
     }
 
     /**
-     * Get the endpoint
-     * @method endpoint
-     *
-     * @return   string
-     */
-    private function endpoint()
-    {
-        return $this->endpoint;
-    }
-
-    /**
-     * Get the formatted url
-     * @method url
-     *
-     * @return   string
-     */
-    private function url($url)
-    {
-        $url = vsprintf("%s/%s%s", [
-            $this->endpoint,
-            ($this->archive_flag) ? 'Archive/v2/' : '',
-            trim($url,'/')
-        ]);
-
-        $this->archive_flag = false;
-
-        return $url;
-    }
-
-    /**
-     * Get the requested url
-     *
-     * @param      <type>  $url    The url
-     */
-    private function get( $url )
-    {
-        $response = Zttp::get( $url );
-
-        $this->archive_flag = false;
-
-        return $response;
-    }
-
-    /**
-     * Get the request url and return json
-     * @method getJson
-     *
-     * @return   response
-     */
-    private function getJson($url)
-    {
-        $expanded = $this->url($url);
-
-        if ( $this->force_flag )
-        {
-            Cache::forget("isupport.{$expanded}");
-        }
-
-        $this->force_flag = false;
-
-        return Cache::remember( "isupport.{$expanded}", 15, function() use ($expanded) {
-
-            $json = $this->get($expanded)->json();
-
-            $json['data'] = collect( $json['data'] )
-                ->transform( function($ticket)
-                {
-                    if ( array_key_exists('id', $ticket) )
-                    {
-                        $ticket['id'] = (int) $ticket['id'];
-                    }
-
-                    if ( array_key_exists('created_date', $ticket) )
-                    {
-                        $ticket['created_date'] = $this->jsDateToCarbon( $ticket['created_date'] );
-                    }
-
-                    if ( array_key_exists('modified_date', $ticket) )
-                    {
-                        $ticket['modified_date'] = $this->jsDateToCarbon( $ticket['modified_date'] );
-                    }
-
-                    if ( array_key_exists('closed_date', $ticket) )
-                    {
-                        $ticket['closed_date'] = $this->jsDateToCarbon( $ticket['closed_date'] );
-                    }
-
-                    if ( array_key_exists('first_response_date', $ticket) )
-                    {
-                        $ticket['first_response_date'] = $this->jsDateToCarbon($ticket['first_response_date']);
-                    }
-
-                    if ( array_key_exists('last_response_date', $ticket) )
-                    {
-                        $ticket['last_response_date'] = $this->jsDateToCarbon($ticket['last_response_date']);
-                    }
-
-                    if ( array_key_exists('last_customer_response_date', $ticket) )
-                    {
-                        $ticket['last_customer_response_date'] = $this->jsDateToCarbon($ticket['last_customer_response_date']);
-                    }
-
-                    if ( array_key_exists('customer_responded_last',$ticket) )
-                    {
-                        $ticket['customer_responded_last'] = !! $ticket['customer_responded_last'];
-                    }
-
-                    return (object) $ticket;
-                });
-            return (object) $json;
-        });
-    }
-
-    /**
      * Get the reps with open tickets
      * @method reps
      *
@@ -142,9 +41,8 @@ class Isupport extends TicketProviderStub implements TicketProviderContract {
      */
     public function reps() : array
     {
-        $response = $this->unclosed();
-
-        $all = $response->data->pluck('assignee')->unique();
+        $ids = Incident::active()->pluck('ID_ASSIGNEE')->unique()->all();
+        $all = Rep::whereIn('ID',$ids)->get()->pluck('name');
 
         return [
             'persons' => $all->reject( function($ass) {
@@ -160,41 +58,54 @@ class Isupport extends TicketProviderStub implements TicketProviderContract {
      * Get the tickets by reps
      * @method openTicketsByReps
      *
-     * @return   json
+     * @return   \Ingenious\Isupport\Contracts\TicketProvider
      */
-    public function openTicketsByReps(array $reps) : StdClass
+    public function openTicketsByReps(array $reps) : TicketProvider
     {
-        $response = $this->unclosed();
+        $ids = Rep::all()->filter(function($rep) use ($reps) {
+           return in_array($rep->name, $reps);
+        })->pluck('ID')->all();
 
-        $response->data = $response->data
-            ->filter( function($ticket) use ($reps) {
-                return in_array($ticket->assignee, $reps);
-            })
-            ->values();
-
-        $response->to = $response->count = $response->data->count();
-
-        return $response;
+        return $this->unclosed()
+            ->whereIn('ID_ASSIGNEE',$ids);
     }
 
     /**
      * Get tickets
      * @method tickets
      *
-     * @return   json
+     * @return \Ingenious\Isupport\Contracts\TicketProvider
      */
-    public function tickets($groupOrIndividual = null, $id = null, $period = null) : StdClass
+    public function tickets($groupOrIndividual = null, $id = null, $period = null) : TicketProvider
     {
-        return $this->getJson( "{$groupOrIndividual}/{$id}/{$period}" );
+        $this->baseQuery();
+
+        if ( is_numeric($groupOrIndividual) )
+            $period = $groupOrIndividual;
+
+        if ( $groupOrIndividual === 'Rep' ) {
+            $id = Rep::all()->where('name',$id)->first()->ID;
+            $this->where('ID_ASSIGNEE', $id);
+        }
+
+        if ( $groupOrIndividual === 'Group' ) {
+            $id = Group::all()->where('name',$id)->first()->ID;
+            $this->where('ID_GROUP',$id);
+        }
+
+        if ( $period > 0 )
+            $this->where('DT_CREATED','>=',Carbon::now()->subYears($period));
+
+        return $this;
     }
 
     /**
      * Get my tickets
      *
      * @param $rep
-     * @return \StdClass
+     * @return \Ingenious\Isupport\Contracts\TicketProvider
      */
-    public function mine($rep) : StdClass
+    public function mine($rep) : TicketProvider
     {
         return $this->force()->unclosed("Rep",$rep);
     }
@@ -203,112 +114,101 @@ class Isupport extends TicketProviderStub implements TicketProviderContract {
      * Get the hot tickets
      * @method hot
      *
-     * @return   json
+     * @return   \Ingenious\Isupport\Contracts\TicketProvider
      */
-    public function hot($groupOrIndividual = null, $id = null) : StdClass
+    public function hot($groupOrIndividual = null, $id = null) : TicketProvider
     {
-        $response = $this->unclosed($groupOrIndividual, $id);
+        $days = ( date('N') > 1 ) ? 1 : 3; // mondays
 
-        $response->data = $response->data
-            ->reject( function($ticket) {
-                $days = ( date('N') > 1 ) ? 2 : 4; // mondays
-                return Carbon::parse( $ticket->created_date )->lt( Carbon::now()->subDays($days) );
-            })
-            ->values();
-
-        $response->to = $response->count = $response->data->count();
-
-        return $response;
+        return $this->unclosed($groupOrIndividual, $id)
+                    ->where('DT_CREATED','>',Carbon::now()->subDays($days));
     }
 
     /**
      * Get the aging tickets
      * @method aging
      *
-     * @return   json
+     * @return   \Ingenious\Isupport\Contracts\TicketProvider
      */
-    public function aging($groupOrIndividual = null, $id = null) : StdClass
+    public function aging($groupOrIndividual = null, $id = null) : TicketProvider
     {
-        $response = $this->unclosed($groupOrIndividual, $id);
+        $days_start = ( date('N') > 1 ) ? 2 : 4; // mondays
+        $days_end  = ( date('N') > 1 ) ? 7 : 9; // mondays
 
-        $response->data = $response->data
-            ->reject( function($ticket) {
-                $days_start = ( date('N') > 1 ) ? 2 : 4; // mondays
-                $days_end  = ( date('N') > 1 ) ? 7 : 9; // mondays
-
-                return Carbon::parse( $ticket->created_date )->gt( Carbon::now()->subDays($days_start) )
-                    || Carbon::parse( $ticket->created_date )->lt( Carbon::now()->subDays($days_end) );
-            })
-            ->values();
-
-        $response->to = $response->count = $response->data->count();
-
-        return $response;
+        return $this->unclosed($groupOrIndividual, $id)
+            ->whereBetween('DT_CREATED',[
+                Carbon::now()->subDays($days_end),
+                Carbon::now()->subDays($days_start),
+            ]);
     }
 
     /**
      * Get the stale tickets
      * @method stale
      *
-     * @return   json
+     * @return   \Ingenious\Isupport\Contracts\TicketProvider
      */
-    public function stale($groupOrIndividual = null, $id = null) : StdClass
+    public function stale($groupOrIndividual = null, $id = null) : TicketProvider
     {
-        $response = $this->unclosed($groupOrIndividual, $id);
+        $days = ( date('N') > 1 ) ? 7 : 9; // mondays
 
-        $response->data = $response->data
-            ->reject( function($ticket) {
-                $days = ( date('N') > 1 ) ? 7 : 9; // mondays
-
-                return Carbon::parse( $ticket->created_date )->gt( Carbon::now()->subDays($days) );
-            })
-            ->values();
-
-        $response->to = $response->count = $response->data->count();
-
-        return $response;
+        return $this->unclosed($groupOrIndividual, $id)
+            ->where('DT_CREATED','>',Carbon::now()->subDays($days));
     }
 
     /**
      * Get all open tickets
      * @method open
      *
-     * @return   json
+     * @return   \Ingenious\Isupport\Contracts\TicketProvider
      */
-    public function open($groupOrIndividual = null, $id = null) : StdClass
+    public function open($groupOrIndividual = null, $id = null) : TicketProvider
     {
-        $response = $this->getJson($groupOrIndividual, $id);
-
-        $response->data = $response->data
-            ->reject( function($ticket) {
-                return $ticket->status != 'Open';
-            })
-            ->values();
-
-        $response->to = $response->count = $response->data->count();
-
-        return $response;
+        return $this->tickets($groupOrIndividual, $id)
+                    ->where('ID_STATUS',Status::OPEN);
     }
 
     /**
      * Get all unclosed tickets
      * @method unclosed
      *
-     * @return   json
+     * @return   \Ingenious\Isupport\Contracts\TicketProvider
      */
-    public function unclosed($groupOrIndividual = null, $id = null) : StdClass
+    public function unclosed($groupOrIndividual = null, $id = null) : TicketProvider
     {
-        $response = $this->tickets($groupOrIndividual, $id);
+        return $this->tickets($groupOrIndividual, $id);
+    }
 
-        $response->data = $response->data
-            ->reject( function($ticket) {
-                return $ticket->status == 'Closed';
-            })
-            ->values();
+    /**
+     * Get closed tickets
+     * @method closed
+     *
+     * @param null|int $period
+     * @return \Ingenious\Isupport\Contracts\TicketProvider
+     */
+    public function closed($period = null) : TicketProvider
+    {
+        return $this->archive()->tickets($period);
+    }
 
-        $response->to = $response->count = $response->data->count();
+    /**
+     * Get tickets closed recently
+     * @method recentClosed
+     *
+     * @return   \Ingenious\Isupport\Contracts\TicketProvider
+     */
+    public function recentClosed() : TicketProvider
+    {
+        $days = ( date('N') > 1 ) ? 2 : 4; // mondays
 
-        return $response;
+        return $this->closed()
+            ->where('DT_CLOSED','>=',Carbon::now()->subDays($days));
+
+    }
+    
+    public function ticketResponseTimes($resolution = 10, $groupOrIndividual = null, $id = null, $years = 2)
+    {
+        return $this->averageTimeOpen($resolution, $groupOrIndividual, $id, $years);
     }
 
     /**
@@ -325,57 +225,6 @@ class Isupport extends TicketProviderStub implements TicketProviderContract {
         }
 
         return $this->getJson("Trends/{$groupOrIndividual}/{$id}/{$years}");
-    }
-
-    /**
-     * Get closed tickets
-     * @method closed
-     *
-     * @param null|string $period
-     * @return \StdClass
-     */
-    public function closed($period = null) : StdClass
-    {
-        return $this->archive()->tickets($period);
-    }
-
-    /**
-     * Get the recently closed tickets.
-     * @method recent
-     *
-     * @return   void
-     */
-    public function recent() : StdClass
-    {
-        return $this->archive()->getJson('Recent');
-    }
-
-    /**
-     * Get tickets closed recently
-     * @method recentClosed
-     *
-     * @return   void
-     */
-    public function recentClosed() : StdClass
-    {
-        $response = $this->recent();
-
-        $response->data = $response->data
-            ->reject( function($ticket) {
-                $days = ( date('N') > 1 ) ? 2 : 4; // mondays
-
-                return Carbon::parse( $ticket->closed_date )->lt( Carbon::now()->subDays($days) );
-            })
-            ->values();
-
-        $response->to = $response->count = $response->data->count();
-
-        return $response;
-    }
-
-    public function ticketResponseTimes($resolution = 10, $groupOrIndividual = null, $id = null, $years = 2)
-    {
-        return $this->averageTimeOpen($resolution, $groupOrIndividual, $id, $years);
     }
 
     /**

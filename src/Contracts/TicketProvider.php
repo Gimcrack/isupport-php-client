@@ -3,6 +3,7 @@
 namespace Ingenious\Isupport\Contracts;
 
 use \StdClass;
+use Illuminate\Database\Query\Builder;
 
 interface TicketProvider {
 
@@ -12,25 +13,27 @@ interface TicketProvider {
 
     public function reps() : array;
 
-    public function openTicketsByReps(array $reps) : StdClass;
+    public function mine($rep) : self;
+    
+    public function openTicketsByReps(array $reps) : self;
 
-    public function tickets($groupOrIndividual, $id, $period) : StdClass;
+    public function tickets($groupOrIndividual, $id, $period) : self;
 
-    public function hot($groupOrIndividual, $id) : StdClass;
+    public function hot($groupOrIndividual, $id) : self;
 
-    public function aging($groupOrIndividual, $id) : StdClass;
+    public function aging($groupOrIndividual, $id) : self;
 
-    public function stale($groupOrIndividual, $id) : StdClass;
+    public function stale($groupOrIndividual, $id) : self;
 
-    public function open($groupOrIndividual, $id) : StdClass;
+    public function open($groupOrIndividual, $id) : self;
 
-    public function unclosed($groupOrIndividual, $id) : StdClass;
+    public function unclosed($groupOrIndividual, $id) : self;
+
+    public function closed() : self;
+
+    public function recentClosed() : self;
 
     public function trends($groupOrIndividual, $id, $years) : StdClass;
 
     public function averageTimeOpen($resolution, $groupOrIndividual, $id, $years) : StdClass;
-
-    public function closed() : StdClass;
-
-    public function recentClosed() : StdClass;
 }

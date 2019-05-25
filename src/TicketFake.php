@@ -10,7 +10,7 @@ class TicketFake {
     public $custom_fields;
     public $customer;
     public $department;
-    public $description;
+    public $problem;
     public $full_description;
     public $group;
     public $id;
@@ -43,7 +43,7 @@ class TicketFake {
         ];
         $this->customer = $faker->word;
         $this->department = $faker->word;
-        $this->description = $faker->sentence;
+        $this->problem = $faker->sentence;
         $this->full_description = $faker->paragraph;
         $this->group = $faker->word;
         $this->id = $faker->randomNumber;
