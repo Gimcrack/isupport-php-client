@@ -3,10 +3,9 @@
 namespace Ingenious\Isupport\Models;
 
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
 use Ingenious\Isupport\Models\Scopes\ActiveScope;
 
-class Group extends Model
+class Group extends BaseModel
 {
     protected $connection = 'isupport';
 

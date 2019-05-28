@@ -4,10 +4,12 @@ namespace Ingenious\Isupport\Models;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
 
-class Incident extends Model
+class Incident extends BaseModel
 {
+    const CREATED_AT = 'DT_CREATED';
+    const UPDATED_AT = 'DT_MODIFIED';
+    
     protected $connection = 'isupport';
 
     protected $table = 'INCIDENTS';

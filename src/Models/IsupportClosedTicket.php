@@ -2,9 +2,8 @@
 
 namespace Ingenious\Isupport\Models;
 
-use Illuminate\Database\Eloquent\Model;
 
-class IsupportClosedTicket extends Model
+class IsupportClosedTicket extends BaseModel
 {
     protected $connection = 'isupport';
 

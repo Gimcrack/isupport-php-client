@@ -2,10 +2,9 @@
 
 namespace Ingenious\Isupport\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Ingenious\Isupport\Models\Scopes\ActiveScope;
 
-class Rep extends Model
+class Rep extends BaseModel
 {
     protected $connection = 'isupport';
 

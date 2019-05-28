@@ -2,10 +2,9 @@
 
 namespace Ingenious\Isupport\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Ingenious\Isupport\Models\Scopes\ActiveScope;
 
-class Status extends Model
+class Status extends BaseModel
 {
     public const OPEN = 1;
     public const CLOSED = 2;

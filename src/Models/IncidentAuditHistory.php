@@ -3,10 +3,11 @@
 namespace Ingenious\Isupport\Models;
 
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
 
-class IncidentAuditHistory extends Model
+class IncidentAuditHistory extends BaseModel
 {
+    const CREATED_AT = 'DT_CREATED';
+    
     protected $connection = 'isupport';
 
     protected $table = 'INCIDENT_AUDIT_HISTORY';

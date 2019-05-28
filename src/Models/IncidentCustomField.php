@@ -11,8 +11,8 @@ class IncidentCustomField extends Model
     protected $types = [
         0 => 'n/a',
         1 => 'subject',
-        2 => 'impact',
-        3 => 'urgency',
+        2 => 'urgency',
+        3 => 'impact',
         4 => 'work_stoppage'
     ];
 

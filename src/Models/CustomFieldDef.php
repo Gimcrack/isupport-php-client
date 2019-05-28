@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Ingenious\Isupport\Models\Scopes\ActiveScope;
 use function snake_case;
 
-class CustomFieldDef extends Model
+class CustomFieldDef extends BaseModel
 {
     protected $connection = 'isupport';
 
