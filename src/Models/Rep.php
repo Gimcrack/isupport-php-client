@@ -6,6 +6,11 @@ use Ingenious\Isupport\Models\Scopes\ActiveScope;
 
 class Rep extends BaseModel
 {
+    public $cacheKeyUsesMaxPrimaryKey = true;
+    public $cacheKeyMaxPrimaryKeyTTL = 60 * 60 * 24;
+    public $cacheKeyUsesModelCount = true;
+    public $cacheKeyModelCountTTL = 60 * 60 * 24;
+
     protected $connection = 'isupport';
 
     protected $table = 'REPS';

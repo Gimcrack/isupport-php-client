@@ -7,6 +7,11 @@ use Illuminate\Database\Eloquent\Builder;
 class CustomerWorkHistory extends BaseModel
 {
     const CREATED_AT = "DT_CREATED";
+
+    public $cacheKeyUsesMaxPrimaryKey = true;
+    public $cacheKeyMaxPrimaryKeyTTL = 300;
+    public $cacheKeyUsesModelCount = true;
+    public $cacheKeyModelCountTTL = 300;
     
     protected $connection = 'isupport';
 

@@ -10,6 +10,11 @@ class Customer extends BaseModel
 
     protected $table = 'CUSTOMERS';
 
+    public $cacheKeyUsesMaxPrimaryKey = true;
+    public $cacheKeyMaxPrimaryKeyTTL = 60 * 60 * 24;
+    public $cacheKeyUsesModelCount = true;
+    public $cacheKeyModelCountTTL = 60 * 60 * 24;
+
     protected $primaryKey = 'ID';
 
     protected $hidden = [

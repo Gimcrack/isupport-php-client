@@ -9,6 +9,9 @@ class Incident extends BaseModel
 {
     const CREATED_AT = 'DT_CREATED';
     const UPDATED_AT = 'DT_MODIFIED';
+
+    public $cacheKeyUsesMaxPrimaryKey = true;
+    public $cacheKeyUsesModelCount = true;
     
     protected $connection = 'isupport';
 
