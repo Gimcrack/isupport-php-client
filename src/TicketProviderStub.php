@@ -20,8 +20,6 @@ abstract class TicketProviderStub {
     public function __construct()
     {
         $this->archive_flag = false;
-
-        $this->force_flag = false;
     }
 
     /**

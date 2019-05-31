@@ -288,6 +288,22 @@ class Incident extends BaseModel
     }
 
     /**
+     * Get tickets with the specified work stoppage value
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param bool $stoppage
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeOfWorkStoppage(Builder $query, $stoppage = true)
+    {
+        $stoppage = $stoppage ? 'yes' : 'no';
+
+        return $query->whereHas('custom_fields', function($subquery) use ($stoppage) {
+            return $subquery->where('ID_FIELD',4)->where('DATA',$stoppage);
+        });
+    }
+
+    /**
      * Get active tickets
      *
      * @param \Illuminate\Database\Eloquent\Builder $query
@@ -301,7 +317,7 @@ class Incident extends BaseModel
     public function toArray()
     {
         return [
-            "assignee" =>  $this->assignee->name,
+            "assignee" =>  optional($this->assignee)->name,
             "author" => optional($this->author)->name,
             "category" => optional($this->category)->name,
             "closed_date" => optional($this->DT_CLOSED)->format("Y-m-d H:i:s.000"),
@@ -324,10 +340,10 @@ class Incident extends BaseModel
             "time_worked" => $this->time_worked,
             "status" => $this->status->name,
             "priority" => $this->priority(),
-            "subject" => $this->fields->subject,
-            "impact" => $this->fields->impact,
-            "urgency" => $this->fields->urgency,
-            "work_stoppage" => $this->fields->work_stoppage,
+            "subject" => optional($this->fields)->subject,
+            "impact" => optional($this->fields)->impact,
+            "urgency" => optional($this->fields)->urgency,
+            "work_stoppage" => optional($this->fields)->work_stoppage,
             "custom_fields" => $this->fields,
         ];
     }

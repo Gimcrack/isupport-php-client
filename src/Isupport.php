@@ -180,6 +180,25 @@ class Isupport extends TicketProviderStub implements TicketProviderContract {
     }
 
     /**
+     * Get the active work stoppage tickets
+     * 
+     * @param null $groupOrIndividual
+     * @param null $id
+     * @param bool $open_only
+     * @return \Ingenious\Isupport\Contracts\TicketProvider
+     */
+    public function workStoppage($groupOrIndividual = null, $id = null, $open_only = false) : TicketProvider
+    {
+        $method = $open_only ? 'open' : 'unclosed';
+        
+        $ret = $this->$method($groupOrIndividual, $id);
+
+        $ret->query->ofWorkStoppage(true);
+
+        return $ret;
+    }
+
+    /**
      * Get closed tickets
      * @method closed
      *

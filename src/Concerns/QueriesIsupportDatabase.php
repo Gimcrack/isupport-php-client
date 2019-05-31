@@ -19,7 +19,12 @@ trait QueriesIsupportDatabase
     {
         $scope = $this->archive_flag ? "archive" : "active";
 
-        $this->query = Incident::$scope();
+        if ( $this->force_flag )
+            $this->query = Incident::$scope()->disableCache();
+        else
+            $this->query = Incident::$scope();
+
+        $this->force_flag = false;
 
         return $this;
     }

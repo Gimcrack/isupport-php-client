@@ -37,7 +37,7 @@ class IncidentCustomField extends Model
 
     public function getNameAttribute()
     {
-        return $this->types[$this->ID_FIELD] ?? $this->definition->name;
+        return $this->types[$this->ID_FIELD] ?? optional($this->definition)->name;
     }
 
     public function scopeOfType(Builder $query, $type)
