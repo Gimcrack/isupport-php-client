@@ -2,13 +2,13 @@
 
 namespace Ingenious\Isupport\Concerns;
 
-use Zttp\Zttp;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
 
 trait MakesHttpRequests
 {
     protected $endpoint;
-    
+
     /**
      * Get the endpoint
      * @method endpoint
@@ -46,7 +46,7 @@ trait MakesHttpRequests
      */
     protected function get( $url )
     {
-        $response = Zttp::get( $url );
+        $response = Http::get( $url );
 
         $this->archive_flag = false;
 
